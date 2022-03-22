@@ -18,13 +18,14 @@ pub enum InvoiceActions {
   UpdateProductDescription(ProductReturn),
   UpdateProductQty(ProductReturn),
   UpdateProductPrice(ProductReturn),
+  AddProduct,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ProductReturn {
   pub name: String,
   pub value: String,
-  pub key: u32,
+  pub key: usize,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -225,6 +226,22 @@ impl Reducible for InvoiceState {
         if let Some(product) = product {
           product.price = product_props.value;
         }
+        InvoiceState {
+          to: self.to.clone(),
+          from: self.from.clone(),
+          invoice_data: self.invoice_data.clone(),
+          products,
+        }
+        .into()
+      }
+      InvoiceActions::AddProduct => {
+        let mut products = self.products.clone();
+        products.push(ProductProps {
+          number: products.len() + 1,
+          description: String::from(""),
+          qty: String::from("1"),
+          price: String::from("1.00"),
+        });
         InvoiceState {
           to: self.to.clone(),
           from: self.from.clone(),

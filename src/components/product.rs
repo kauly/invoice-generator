@@ -10,7 +10,7 @@ use yew::prelude::*;
 
 #[derive(Properties, PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct ProductProps {
-  pub number: u32,
+  pub number: usize,
   pub description: String,
   pub qty: String,
   pub price: String,
@@ -21,8 +21,8 @@ impl Default for ProductProps {
     Self {
       number: 1,
       description: String::from(""),
-      qty: String::from(""),
-      price: String::from(""),
+      qty: String::from("1"),
+      price: String::from("1.00"),
     }
   }
 }
@@ -37,22 +37,32 @@ pub fn product(props: &ProductProps) -> Html {
     price,
   } = props.clone();
 
-  let oninput = Callback::from(move |e: InputEvent| {
-    let event: Event = e.dyn_into().unwrap_throw();
-    let event_target = event.target().unwrap_throw();
-    let target: HtmlInputElement = event_target.dyn_into().unwrap_throw();
-    let props = ProductReturn {
-      value: target.value(),
-      name: target.name(),
-      key: number,
-    };
-    match props.name.as_str() {
-      "description" => invoice_reducer.dispatch(InvoiceActions::UpdateProductDescription(props)),
-      "qty" => invoice_reducer.dispatch(InvoiceActions::UpdateProductQty(props)),
-      "price" => invoice_reducer.dispatch(InvoiceActions::UpdateProductPrice(props)),
-      _ => panic!("unknown name"),
-    }
-  });
+  let oninput = {
+    let invoice_reducer = invoice_reducer.clone();
+    Callback::from(move |e: InputEvent| {
+      let event: Event = e.dyn_into().unwrap_throw();
+      let event_target = event.target().unwrap_throw();
+      let target: HtmlInputElement = event_target.dyn_into().unwrap_throw();
+      let props = ProductReturn {
+        value: target.value(),
+        name: target.name(),
+        key: number,
+      };
+      match props.name.as_str() {
+        "description" => invoice_reducer.dispatch(InvoiceActions::UpdateProductDescription(props)),
+        "qty" => invoice_reducer.dispatch(InvoiceActions::UpdateProductQty(props)),
+        "price" => invoice_reducer.dispatch(InvoiceActions::UpdateProductPrice(props)),
+        _ => panic!("unknown name"),
+      }
+    })
+  };
+
+  let onclick = {
+    let invoice_reducer = invoice_reducer.clone();
+    Callback::from(move |_| {
+      invoice_reducer.dispatch(InvoiceActions::AddProduct);
+    })
+  };
 
   html! {
     <>
@@ -67,7 +77,7 @@ pub fn product(props: &ProductProps) -> Html {
         <input class="pl-2 rounded w-40" name="price" type="number" min="0" step="0.01" value={price} oninput={oninput.clone()} />
       </div>
       <div class="bg-zinc-300 text-black text-center">
-        <button>{"ADD"}</button>
+        <button {onclick} >{"ADD"}</button>
       </div>
     </>
   }
